@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'models/user.dart';
+import 'models/bank_account.dart';
+import 'models/library_item.dart';
+import 'models/book.dart';
+import 'models/magazine.dart';
+import 'models/library.dart';
+import 'screens/todo_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,7 +37,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Lab 1 App'),
+      home: const TodoScreen(),
     );
   }
 }
@@ -75,47 +82,65 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    
+    final List<User> users = [
+      User(name: 'Alice Smith', age: 22, email: 'alice@example.com'),
+      User(name: 'Bob Johnson', age: 25), // email is null
+      User(name: 'Charlie Brown') // age and email are null
+    ];
+    
+    final List<BankAccount> accounts = [
+      BankAccount(holderName: 'John Doe', balance: 1500.0, bankBranch: 'Main Branch'),
+      BankAccount(holderName: 'Jane Smith', balance: 300.0),
+    ];
+    accounts[0].initializeAccount('RO12REVOLUT3000');
+
+    final Library library = Library();
+    library.addItem(Book(title: 'Dart Guide', author: 'Author A', pageCount: 300));
+    library.addItem(Magazine(title: 'Tech Monthly', issueNumber: 42));
+
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: ListView(
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('Task I: Users', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          ...users.map((user) => ListTile(
+                title: Text(user.name),
+                subtitle: Text('Email: ${user.email ?? 'Not provided'}'),
+                trailing: Text('Age: ${user.getDisplayAge()}'),
+              )),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('Task II: Bank Accounts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          ...accounts.map((acc) => ListTile(
+                title: Text(acc.holderName),
+                subtitle: Text('Branch: ${acc.bankBranch ?? 'N/A'} | Balance: \$${acc.balance}'),
+                trailing: Text(
+                  acc.isAccountNumberSet() ? 'Acc: ${acc.accountNumber}' : 'Uninitialized account',
+                  style: TextStyle(
+                    color: acc.isAccountNumberSet() ? Colors.green : Colors.red,
+                  ),
+                ),
+              )),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('Task III: Library Items', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          ...library.items.map((item) => ListTile(
+                title: Text(item.title),
+                subtitle: Text('Author: ${item.author ?? 'Unknown'}'),
+                trailing: Text(item.borrower == null ? 'Available' : 'Borrowed'),
+              )),
+        ],
       ),
     );
   }
