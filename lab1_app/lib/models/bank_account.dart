@@ -24,6 +24,6 @@ class BankAccount {
   }
 
   void _checkAccountInitialized() {
-    String tempAccountNumber = accountNumber;
+    // String tempAccountNumber = accountNumber;
   }
 }

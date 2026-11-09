@@ -1,13 +1,31 @@
 import 'package:flutter/material.dart';
 import 'models/user.dart';
 import 'models/bank_account.dart';
-import 'models/library_item.dart';
+// import 'models/library_item.dart';
 import 'models/book.dart';
 import 'models/magazine.dart';
 import 'models/library.dart';
 import 'screens/todo_screen.dart';
+import 'models/todo.dart';
 
 void main() {
+  const todo1 = Todo(
+    userId: 1,
+    id: 1,
+    title: 'delectus aut autem',
+    completed: false,
+  );
+
+  const todo2 = Todo(
+    userId: 1,
+    id: 1,
+    title: 'delectus aut autem',
+    completed: false,
+  );
+
+  // Should print true in console, since Equatable compares objects via fields (props)
+  debugPrint('Are todos equal? ${todo1 == todo2}');
+
   runApp(const MyApp());
 }
 
@@ -61,18 +79,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  // int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  // void _incrementCounter() {
+  //   setState(() {
+  //     // This call to setState tells the Flutter framework that something has
+  //     // changed in this State, which causes it to rerun the build method below
+  //     // so that the display can reflect the updated values. If we changed
+  //     // _counter without calling setState(), then the build method would not be
+  //     // called again, and so nothing would appear to happen.
+  //     // _counter++;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

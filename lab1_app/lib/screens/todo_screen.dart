@@ -15,7 +15,12 @@ class _TodoScreenState extends State<TodoScreen> {
   void _add() {
     if (_input.text.isNotEmpty) {
       setState(() {
-        _items.add(Todo(_input.text));
+        _items.add(Todo(
+          userId: 1,
+          id: DateTime.now().millisecondsSinceEpoch,
+          title: _input.text,
+          completed: false,
+        ));
       });
       _input.clear();
     }
@@ -94,7 +99,13 @@ class _TodoScreenState extends State<TodoScreen> {
                     todo: todo,
                     onChanged: (val) {
                       setState(() {
-                        todo.done = val ?? false;
+                        final index = _items.indexOf(todo);
+                        _items[index] = Todo(
+                          userId: todo.userId,
+                          id: todo.id,
+                          title: todo.title,
+                          completed: val ?? false,
+                        );
                       });
                     },
                   ),
@@ -154,7 +165,7 @@ class TodoTile extends StatelessWidget {
       child: ListTile(
         title: Text(todo.title),
         trailing: Checkbox(
-          value: todo.done,
+          value: todo.completed,
           onChanged: onChanged,
         ),
       ),
