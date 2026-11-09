@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/todo.dart';
+import '../api/todo_api.dart';
 
 class TodoScreen extends StatefulWidget {
   const TodoScreen({super.key});
@@ -9,142 +10,78 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  final List<Todo> _items = [];
-  final TextEditingController _input = TextEditingController();
-
-  void _add() {
-    if (_input.text.isNotEmpty) {
-      setState(() {
-        _items.add(Todo(
-          userId: 1,
-          id: DateTime.now().millisecondsSinceEpoch,
-          title: _input.text,
-          completed: false,
-        ));
-      });
-      _input.clear();
-    }
-  }
+  List<Todo> _items = [];
+  bool _isLoading = true;
+  final TodoApi _api = TodoApi();
+  final List<String> _retryLogs = [];
 
   @override
-  void dispose() {
-    _input.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadTodos();
+  }
+
+  Future<void> _loadTodos() async {
+    try {
+      // Temporaly substitute _api.fetchTodos with _api.fetchInvalid, 
+      // in order to test retry-logic with the error 404
+      final todos = await _api.withRetry(() => _api.fetchTodos());
+      setState(() {
+        _items = todos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _retryLogs.add('Failed to load: $e');
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todo List'),
+        title: const Text('Lab 4 - Live Todos'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _input,
-                    decoration: const InputDecoration(
-                      labelText: 'New Todo',
-                      border: OutlineInputBorder(),
+                if (_retryLogs.isNotEmpty)
+                  Container(
+                    color: Colors.red.shade100,
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      children: _retryLogs
+                          .map((log) => Text(log, style: const TextStyle(color: Colors.red)))
+                          .toList(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _add,
-                  child: const Text('Add'),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                final todo = _items[index];
-                return Dismissible(
-                  key: ValueKey(todo.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) {
-                    final removedItem = todo;
-                    final removedIndex = index;
-                    setState(() {
-                      _items.removeAt(index);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Removed ${removedItem.title}'),
-                        action: SnackBarAction(
-                          label: 'UNDO',
-                          onPressed: () {
-                            setState(() {
-                              _items.insert(removedIndex, removedItem);
-                            });
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  child: TodoTile(
-                    todo: todo,
-                    onChanged: (val) {
-                      setState(() {
-                        final index = _items.indexOf(todo);
-                        _items[index] = Todo(
-                          userId: todo.userId,
-                          id: todo.id,
-                          title: todo.title,
-                          completed: val ?? false,
-                        );
-                      });
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _items.length,
+                    itemBuilder: (context, index) {
+                      final todo = _items[index];
+                      return TodoTile(
+                        todo: todo,
+                        onChanged: (val) {
+                          setState(() {
+                            _items[index] = Todo(
+                              userId: todo.userId,
+                              id: todo.id,
+                              title: todo.title,
+                              completed: val ?? false,
+                            );
+                          });
+                        },
+                      );
                     },
                   ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Add Todo'),
-              content: TextField(controller: _input),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    _add();
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Add'),
                 ),
               ],
             ),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
     );
-
-    
   }
 }
 
@@ -164,6 +101,7 @@ class TodoTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
         title: Text(todo.title),
+        subtitle: Text('User ID: ${todo.userId} | ID: ${todo.id}'),
         trailing: Checkbox(
           value: todo.completed,
           onChanged: onChanged,
